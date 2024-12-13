@@ -19,6 +19,7 @@
 #include <QtCore/QFileInfo>
 #include <QtWidgets/QFileIconProvider>
 #include <QDesktopServices>
+#include <QScrollArea>
 #include <QImageReader>
 #include <QMessageBox>
 #include <QtCore/QDir>
@@ -68,69 +69,97 @@ std::vector<TheButtonInfo> getInfoIn (std::string loc) {
 
 int main(int argc, char *argv[]) {
 
-    // let's just check that Qt is operational first
+    // 检查 Qt 是否正常工作
     qDebug() << "Qt version: " << QT_VERSION_STR << endl;
 
-    // create the Qt Application
+    // 创建 Qt 应用程序
     QApplication app(argc, argv);
 
-    // collect all the videos in the folder
+    // 收集文件夹中的所有视频
     std::vector<TheButtonInfo> videos;
 
     if (argc == 2)
-        videos = getInfoIn( std::string(argv[1]) );
+        videos = getInfoIn(std::string(argv[1]));
 
-    if (videos.size() == 0) {
-
-        const int result = QMessageBox::information(
-                    NULL,
-                    QString("Tomeo"),
-                    QString("no videos found! Add command line argument to \"quoted\" file location."));
+    if (videos.empty()) {
+        QMessageBox::information(
+            nullptr,
+            "Tomeo",
+            "No videos found! Add command line argument to \"quoted\" file location.");
         exit(-1);
     }
 
-    // the widget that will show the video
+    // 视频播放窗口
     QVideoWidget *videoWidget = new QVideoWidget;
 
-    // the QMediaPlayer which controls the playback
+    // 视频播放器
     ThePlayer *player = new ThePlayer;
     player->setVideoOutput(videoWidget);
+    videoWidget->show();
 
-    // a row of buttons
-    QWidget *buttonWidget = new QWidget();
-    // a list of the buttons
+    // 将视频信息和按钮列表关联到播放器
     std::vector<TheButton*> buttons;
-    // the buttons are arranged horizontally
-    QHBoxLayout *layout = new QHBoxLayout();
-    buttonWidget->setLayout(layout);
+    player->setContent(&buttons, &videos);
 
+    // 滚动区域设置
+    QScrollArea *scrollArea = new QScrollArea();
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setMinimumHeight(175); // 设置滚动区域的最小高度
 
-    // create the four buttons
-    for ( int i = 0; i < 4; i++ ) {
+    // 按钮容器和布局
+    QWidget *buttonWidget = new QWidget();
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->setSpacing(10); // 按钮间距
+    buttonLayout->setContentsMargins(10, 0, 10, 0); // 边距
+    buttonWidget->setLayout(buttonLayout);
+
+    // 创建按钮并关联功能
+    for (size_t i = 0; i < videos.size(); i++) {
         TheButton *button = new TheButton(buttonWidget);
-        button->connect(button, SIGNAL(jumpTo(TheButtonInfo* )), player, SLOT (jumpTo(TheButtonInfo*))); // when clicked, tell the player to play.
+        button->connect(button, SIGNAL(jumpTo(TheButtonInfo*)),
+                        player, SLOT(jumpTo(TheButtonInfo*)));
         buttons.push_back(button);
-        layout->addWidget(button);
+        buttonLayout->addWidget(button);
         button->init(&videos.at(i));
+
+        // 获取视频时长
+        QMediaPlayer *tempPlayer = new QMediaPlayer;
+        tempPlayer->setMedia(*videos.at(i).url);
+        QEventLoop loop;
+        QObject::connect(tempPlayer, &QMediaPlayer::durationChanged,
+                         [&](qint64 duration) {
+                             videos.at(i).duration = duration;
+                             button->setDuration(duration);
+                             loop.quit();
+                         });
+        tempPlayer->play();
+        loop.exec();
+        delete tempPlayer;
     }
 
-    // tell the player what buttons and videos are available
-    player->setContent(&buttons, & videos);
+    // Play
+    player->setMedia(*videos[0].url);
+    player->play();
 
-    // create the main window and layout
+    // 将按钮容器添加到滚动区域
+    scrollArea->setWidget(buttonWidget);
+
+    // 创建主窗口和主布局
     QWidget window;
-    QVBoxLayout *top = new QVBoxLayout();
-    window.setLayout(top);
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+    window.setLayout(mainLayout);
     window.setWindowTitle("tomeo");
     window.setMinimumSize(800, 680);
 
-    // add the video and the buttons to the top level widget
-    top->addWidget(videoWidget);
-    top->addWidget(buttonWidget);
+    // 将视频播放窗口和滚动按钮区域添加到主布局
+    mainLayout->addWidget(videoWidget);   // 播放窗口在上
+    mainLayout->addWidget(scrollArea);    // 按钮区域在下
 
-    // showtime!
+    // 显示主窗口
     window.show();
 
-    // wait for the app to terminate
+    // 等待程序退出
     return app.exec();
 }
