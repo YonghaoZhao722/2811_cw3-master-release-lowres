@@ -137,6 +137,7 @@ void MainWindow::setupProgressBar()
 {
     ui->progressBar->setFixedHeight(30);
     ui->progressBar->setStyleSheet(
+        "QWidget { background: transparent; }"  // 设置整体背景透明
         "QSlider::groove:horizontal {"
         "    background: #ddd;"
         "    height: 8px;"
@@ -144,13 +145,17 @@ void MainWindow::setupProgressBar()
         "}"
         "QSlider::handle:horizontal {"
         "    background: #666;"
-        "    width: 16px;"
+        "    width: 20px;"
         "    margin: -4px 0;"
         "    border-radius: 8px;"
         "}"
+        "QLabel {"  // 时间标签样式
+        "    color: white;"
+        "    font-size: 16px;"
+        "    font-weight: bold;"
+        "}"
         );
     player->setProgressBar(ui->progressBar);
-
 }
 
 

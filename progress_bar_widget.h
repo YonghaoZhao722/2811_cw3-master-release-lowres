@@ -1,5 +1,6 @@
 #ifndef PROGRESS_BAR_WIDGET_H
 #define PROGRESS_BAR_WIDGET_H
+
 #include <QWidget>
 #include <QSlider>
 #include <QLabel>
@@ -17,7 +18,11 @@ signals:
 
 private:
     QSlider* slider;
+    QLabel* timeLabel;
     qint64 totalDuration;
-    bool isUserInteracting;  // 标记是否是用户操作
+    bool isUserInteracting;
+
+    QString formatTime(qint64 milliseconds);
+    virtual void resizeEvent(QResizeEvent* event) override;  // 添加重置大小事件处理
 };
 #endif // PROGRESS_BAR_WIDGET_H
