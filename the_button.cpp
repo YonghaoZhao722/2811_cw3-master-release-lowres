@@ -9,8 +9,29 @@
 #include <QString>
 
 void TheButton::init(TheButtonInfo* i) {
-    setIcon( *(i->icon) );
-    info =  i;
+    info = i;
+
+    if (i->icon) {
+        setIcon(*i->icon);
+        setIconSize(size());
+        // 强制将图标显示在最上层
+        setStyleSheet(R"(
+            QPushButton {
+                border: none;
+                background: transparent;
+                padding: 0;
+                margin: 0;
+                // background-position: top;  /* 将图标置于顶部 */
+                background-repeat: no-repeat;
+                z-index: 999;  /* 尝试强制最高层级 */
+            }
+        )");
+
+        // 强制刷新和重绘
+        update();
+        raise();
+    }
+    setDuration(info->duration);
 }
 
 
@@ -21,30 +42,39 @@ void TheButton::clicked() {
 void TheButton::resizeEvent(QResizeEvent* event) {
     QPushButton::resizeEvent(event);
     if (durationLabel) {
-        // 更新时长标签的位置，放在按钮底部
-        durationLabel->move(width() - durationLabel->width() - 5,
-                            height() - durationLabel->height() - 5);
+        durationLabel->raise();  // 确保时长标签始终在顶层
+        updateDurationPosition();
     }
 }
 
 void TheButton::setDuration(long long duration) {
+
     if (!durationLabel) {
-        // 如果 durationLabel 尚未初始化，创建它
         durationLabel = new QLabel(this);
-        durationLabel->setStyleSheet("color: white; background-color: rgba(0, 0, 0, 0.6); border-radius: 3px;");
+        durationLabel->setStyleSheet("QLabel { color: white; background-color: rgba(0, 0, 0, 0.6); border-radius: 3px; padding: 2px 4px; }");
         durationLabel->setAlignment(Qt::AlignCenter);
     }
 
-    // 将时长转换为 mm:ss 格式
-    QTime time(0, 0, 0);
-    time = time.addMSecs(static_cast<int>(duration));
-    QString durationText = time.toString("mm:ss");
+    // 计算并输出中间值
+    int totalSeconds = duration / 1000;
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
 
-    // 设置标签文本
+
+    QString durationText = QString("%1:%2")
+                               .arg(minutes, 2, 10, QChar('0'))
+                               .arg(seconds, 2, 10, QChar('0'));
+
+
     durationLabel->setText(durationText);
-    durationLabel->adjustSize(); // 自动调整大小
+    durationLabel->adjustSize();
+    updateDurationPosition();
+}
 
-    // 将标签定位到按钮的右下角
-    durationLabel->move(width() - durationLabel->width() - 5,
-                        height() - durationLabel->height() - 5);
+void TheButton::updateDurationPosition() {
+    if (durationLabel && !durationLabel->text().isEmpty()) {
+        durationLabel->adjustSize();
+        durationLabel->move(width() - durationLabel->width() - 5,
+                            height() - durationLabel->height() - 5);
+    }
 }
