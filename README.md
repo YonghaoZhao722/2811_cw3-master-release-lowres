@@ -61,15 +61,15 @@ A lightweight, cross-platform video player built with Qt framework that automati
 ### Control Guide
 
 #### Basic Controls
-- **Play/Pause**: <img src="icons/play.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Play button 
-- **Skip Forward**: <img src="icons/fast-forward.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Forward button (2 seconds)
-- **Skip Backward**: <img src="icons/rewind.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Backward button (2 seconds)
-- **Next Video**: <img src="icons/next.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Next button
-- **Previous Video**: <img src="icons/previous.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Previous button
+- **Play/Pause**: <img src="icons/play-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Play button 
+- **Skip Forward**: <img src="icons/fast-forward-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Forward button (2 seconds)
+- **Skip Backward**: <img src="icons/rewind-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Backward button (2 seconds)
+- **Next Video**: <img src="icons/next-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Next button
+- **Previous Video**: <img src="icons/previous-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> Previous button
 
 #### Advanced Controls
 - **Volume**:  Slider or mouse wheel over volume area 
-- **Mute/Unmute**:  Click speaker icon <img src="icons/volume.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> / <img src="icons/mute.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;">
+- **Mute/Unmute**:  Click speaker icon <img src="icons/volume-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> / <img src="icons/mute-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;">
 - **Timeline**: Drag progress bar
 - **Speed Control**: Adjust using speed button
 
