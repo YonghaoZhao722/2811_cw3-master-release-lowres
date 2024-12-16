@@ -1,6 +1,6 @@
 # Tomeo Video Player 🎥
 
-A lightweight, cross-platform video player built with Qt framework that automatically detects and plays local video files.
+A lightweight, cross-platform video player prototype built with Qt framework that automatically detects and plays local video files.
 
 ## ✨ Features
 
@@ -44,7 +44,9 @@ A lightweight, cross-platform video player built with Qt framework that automati
 
 ## 💻 Usage
 
-### Supported Video Formats
+### Setup
+- Place video files in the `videos` folder
+- Application automatically detects and plays compatible formats:
 - Windows: .wmv
 - macOS/Linux: .mov / .mp4
 
@@ -66,3 +68,7 @@ A lightweight, cross-platform video player built with Qt framework that automati
 #### Playlist
 - Automatically displays all compatible videos
 - Click thumbnail to play selected video
+
+## ⚠️ Note
+
+This is a prototype version for demonstration purposes. Some features may be incomplete or subject to change.
