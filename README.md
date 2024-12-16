@@ -59,7 +59,7 @@ A lightweight, cross-platform video player built with Qt framework that automati
 
 #### Advanced Controls
 - **Volume**:  Slider or mouse wheel over volume area 
-- **Mute/Unmute**:  Click speaker icon <img src="icons/volume.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> / <img src="icons/mute.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;">
+- **Mute/Unmute**:  Click speaker icon <img src="icons/volume-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;"> / <img src="icons/mute-dark.svg" alt="play icon" width="16" height="16" style="vertical-align: middle;">
 - **Timeline**: Drag progress bar
 - **Speed Control**: Adjust using speed button
 
