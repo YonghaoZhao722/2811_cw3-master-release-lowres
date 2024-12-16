@@ -33,10 +33,14 @@ A lightweight, cross-platform video player built with Qt framework that automati
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Qt 5.x or higher
+
+- Qt 5.x or higher with the following modules:
+ - core
+ - gui
+ - widgets
+ - multimedia
+ - multimediawidgets
 - C++11 compatible compiler
-- Qt Multimedia module
-- Qt Widgets module
 
 ### Installation
 
