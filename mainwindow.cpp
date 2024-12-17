@@ -20,12 +20,14 @@
 #include <QMessageBox>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
+#include <QFileDialog>
+#include <QMessageBox>
 
 // read in videos and thumbnails to this directory
 std::vector<TheButtonInfo> getInfoIn (std::string loc) {
 
-    std::vector<TheButtonInfo> out =  std::vector<TheButtonInfo>();
-    QDir dir(QString::fromStdString(loc) );
+    std::vector<TheButtonInfo> out;
+    QDir dir(QString::fromStdString(loc));
     QDirIterator it(dir);
 
     while (it.hasNext()) { // for all files
@@ -35,25 +37,27 @@ std::vector<TheButtonInfo> getInfoIn (std::string loc) {
         if (f.contains("."))
 
 #if defined(_WIN32)
-        if (f.contains(".wmv"))  { // windows
+        if (f.endsWith(".wmv", Qt::CaseInsensitive))  { // windows
 #else
-        if (f.contains(".mp4") || f.contains("MOV"))  { // mac/linux
+        if (f.endsWith(".mp4", Qt::CaseInsensitive) || f.endsWith(".MOV", Qt::CaseInsensitive))  { // mac/linux
 #endif
+            QString thumb = f.left(f.length() - 4) + ".png";
+            QIcon ico;
 
-            QString thumb = f.left( f .length() - 4) +".png";
-            if (QFile(thumb).exists()) { // if a png thumbnail exists
-                QImageReader *imageReader = new QImageReader(thumb);
-                QImage sprite = imageReader->read(); // read the thumbnail
+            if (QFile::exists(thumb)) {
+                QImageReader imageReader(thumb);
+                QImage sprite = imageReader.read();
                 if (!sprite.isNull()) {
-                    QIcon* ico = new QIcon(QPixmap::fromImage(sprite)); // voodoo to create an icon for the button
-                    QUrl* url = new QUrl(QUrl::fromLocalFile( f )); // convert the file location to a generic url
-                    out . push_back(TheButtonInfo( url , ico  ) ); // add to the output list
+                    ico = QIcon(QPixmap::fromImage(sprite));
+                } else {
+                    ico = QIcon(":/icons/defaultPicture.png");
                 }
-                else
-                    qDebug() << "warning: skipping video because I couldn't process thumbnail " << thumb << endl;
+            } else {
+                ico = QIcon(":/icons/defaultPicture.png");
             }
-            else
-                qDebug() << "warning: skipping video because I couldn't find thumbnail " << thumb << endl;
+
+            QUrl url = QUrl::fromLocalFile(f);
+            out.emplace_back(TheButtonInfo(url, ico));
         }
     }
 
@@ -65,19 +69,65 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setStyleSheet("QMainWindow { background-color: #1e1e1e; }");
+    setStyleSheet("QMainWindow { background-color: #ffffff; }");
     setupUi();
-    loadVideos("F:\\2811_cw3-master-release-lowres\\videos");
+    loadVideos("C:\\Users\\32654\\Desktop\\videos");
     setupPlayer();
     createButtons();
     setupProgressBar();
     setupControlButtons();
 
+    // 连接“加载视频”按钮
+    connect(ui->loadButton, &QPushButton::clicked, this, &MainWindow::onLoadButtonClicked);
+    ui->loadButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #e6d9d6;"
+        "    color: black;"
+        "    border: none;"
+        "    padding: 10px 20px;"
+        "    text-align: center;"
+        "    text-decoration: none;"
+        "    font-size: 16px;"
+        "    border-radius: 8px;"
+        "}"
+        );
+
+    // 创建“Delete All”按钮
+    QPushButton* deleteAllButton = new QPushButton("Delete All", this);
+    deleteAllButton->setObjectName("deleteAllButton");
+    deleteAllButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #ff4d4d;"  // 红色背景
+        "    color: white;"               // 白色文字
+        "    border: none;"
+        "    padding: 10px 20px;"
+        "    font-size: 16px;"
+        "    border-radius: 8px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #ff1a1a;"  // 悬停时更深的红色
+        "}"
+        );
+    // 获取 Qt Designer 中的 loadButton
+    QPushButton* loadButton = ui->loadButton;
+    // 将“LOAD”和“DELETE ALL”按钮添加到水平布局
+    QHBoxLayout* topLayout = new QHBoxLayout();
+    topLayout->addWidget(loadButton);
+    topLayout->addWidget(deleteAllButton);
+    topLayout->addStretch(); // 将按钮推到左侧
+
+    // 将顶部布局添加到主布局
+    QWidget* topWidget = new QWidget(this);
+    topWidget->setLayout(topLayout);
+    ui->videoLayout->insertWidget(0, topWidget);
+
+    // 连接“Delete All”按钮信号到槽函数
+    connect(deleteAllButton, &QPushButton::clicked, this, &MainWindow::onDeleteAllClicked);
 
     // 开始播放第一个视频
     if (!videos.empty()) {
         qDebug() << "not empty ";
-        player->setMedia(*videos[0].url);
+        player->setMedia(videos[0].url);
         player->play();
     }
     else{
@@ -87,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    // delete ui;
+    delete ui;
 }
 
 void MainWindow::setupUi()
@@ -98,7 +148,6 @@ void MainWindow::setupUi()
     // 设置视频窗口的样式
     ui->videoWidget->setStyleSheet("QVideoWidget { background-color: black; }");
     setStyleSheet("background-color: black;");
-
 }
 
 void MainWindow::loadVideos(const std::string& path)
@@ -126,11 +175,6 @@ void MainWindow::setupPlayer()
 
     // 设置视频窗口的背景
     ui->videoWidget->setAttribute(Qt::WA_NoSystemBackground);
-
-    // // 如果视频是上下颠倒的，添加以下代码
-    // QTransform transform;
-    // transform.rotate(180);
-    // ui->videoWidget->setTransform(transform);
 }
 
 void MainWindow::setupProgressBar()
@@ -158,8 +202,12 @@ void MainWindow::setupProgressBar()
     player->setProgressBar(ui->progressBar);
 }
 
-
 void MainWindow::createButtons() {
+    buttons.clear();
+    QWidget* oldContainer = ui->scrollArea->widget();
+    if (oldContainer) {
+        delete oldContainer;
+    }
     QWidget* container = new QWidget();
     QVBoxLayout* layout = new QVBoxLayout();
     layout->setSpacing(8);
@@ -179,9 +227,14 @@ void MainWindow::createButtons() {
         TheButton* button = new TheButton(buttonWidget);
         button->setIconSize(QSize(160, 90));  // 设置基础大小
         button->setObjectName("thumbnailButton");
+
+        // 连接删除请求信号
+        connect(button, &TheButton::jumpTo, player, &ThePlayer::jumpTo);
+       // connect(button, &TheButton::deleteRequested, this, &MainWindow::onDeleteVideo);
         // 设置大小策略为可扩展但保持宽高比
         button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         connect(button, &TheButton::jumpTo, player, &ThePlayer::jumpTo);
+        connect(button, &TheButton::deleteRequested, this, &MainWindow::onDeleteVideo); //删除视频
         button->init(&videos.at(i));
         buttons.push_back(button);
 
@@ -307,14 +360,17 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::MouseButtonRelease) {
-        QWidget* widget = qobject_cast<QWidget*>(obj);
-        if (widget) {
-            bool ok;
-            int index = widget->property("buttonIndex").toInt(&ok);
-            if (ok && index >= 0 && index < buttons.size()) {
-                // 触发相应按钮的 jumpTo 信号
-                buttons[index]->clicked();
-                return true;
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            QWidget* widget = qobject_cast<QWidget*>(obj);
+            if (widget) {
+                bool ok;
+                int index = widget->property("buttonIndex").toInt(&ok);
+                if (ok && index >= 0 && index < buttons.size()) {
+                    // 触发播放信号
+                    buttons[index]->clicked();
+                    return true;
+                }
             }
         }
     }
@@ -332,22 +388,22 @@ void MainWindow::setupControlButtons() {
     controlLayout->setSpacing(10);
 
     // Initialize buttons
-    prevButton = new QPushButton();
+    QPushButton* prevButton = new QPushButton();
     prevButton->setIcon(QIcon(":/icons/previous.svg"));
 
-    skipBackButton = new QPushButton();
+    QPushButton* skipBackButton = new QPushButton();
     skipBackButton->setIcon(QIcon(":/icons/rewind.svg"));
 
-    playPauseButton = new QPushButton();
+    QPushButton* playPauseButton = new QPushButton();
     playPauseButton->setIcon(QIcon(":/icons/play.svg"));
 
-    skipForwardButton = new QPushButton();
+    QPushButton* skipForwardButton = new QPushButton();
     skipForwardButton->setIcon(QIcon(":/icons/fast-forward.svg"));
 
-    nextButton = new QPushButton();
+    QPushButton* nextButton = new QPushButton();
     nextButton->setIcon(QIcon(":/icons/next.svg"));
 
-    speedButton = new QPushButton("1.0x");
+    QPushButton* speedButton = new QPushButton("1.0x");
 
     // Style buttons
     QString buttonStyle = "QPushButton { "
@@ -378,10 +434,10 @@ void MainWindow::setupControlButtons() {
     player->getVolumeSlider()->setStyleSheet(sliderStyle);
     player->getVolumeSlider()->setFixedWidth(120);  // 调整滑块宽度
 
-    QList<QPushButton*> buttons = {prevButton, skipBackButton, playPauseButton,
-                                    skipForwardButton, nextButton, speedButton};
+    QList<QPushButton*> controlButtons = {prevButton, skipBackButton, playPauseButton,
+                                           skipForwardButton, nextButton, speedButton};
 
-    for (auto* button : buttons) {
+    for (auto* button : controlButtons) {
         button->setStyleSheet(buttonStyle);
         button->setFixedSize(50, 50); //按钮大小
         button->setIconSize(QSize(30, 30));
@@ -421,7 +477,7 @@ void MainWindow::setupControlButtons() {
     connect(skipForwardButton, &QPushButton::clicked, player, &ThePlayer::skipForward);
     connect(nextButton, &QPushButton::clicked, player, &ThePlayer::nextVideo);
 
-    connect(player, &QMediaPlayer::stateChanged, [this](QMediaPlayer::State state) {
+    connect(player, &QMediaPlayer::stateChanged, [playPauseButton](QMediaPlayer::State state) {
         playPauseButton->setIcon(QIcon(state == QMediaPlayer::PlayingState ?
                                            ":/icons/pause.svg" : ":/icons/play.svg"));
     });
@@ -432,4 +488,276 @@ void MainWindow::setupControlButtons() {
 
     controlWidget->setFixedHeight(60);
     ui->videoLayout->insertWidget(2, controlWidget);
+}
+
+// 实现加载文件
+void MainWindow::onLoadButtonClicked()
+{
+    qDebug() << "onLoadButtonClicked called";
+
+    // 创建一个提示框，让用户选择加载模式
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Load Video");
+    msgBox.setText("Do you want to load video files or a folder?");
+    QPushButton *fileButton = msgBox.addButton("File", QMessageBox::AcceptRole);
+    QPushButton *folderButton = msgBox.addButton("Folder", QMessageBox::RejectRole);
+    msgBox.addButton(QMessageBox::Cancel);
+
+    msgBox.exec();
+
+    if (msgBox.clickedButton() == fileButton) {
+        // 选择加载文件
+        QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Select Video Files"),
+                                                              "",
+                                                              tr("Video Files (*.mp4 *.MOV *.wmv)"));
+        if (fileNames.isEmpty()) {
+            return;
+        }
+
+        QString errorMsg;
+        bool hasError = false;
+
+        for (const QString& file : fileNames) {
+            QFileInfo info(file);
+            QString suffix = info.suffix().toLower();
+            if (suffix != "mp4" && suffix != "mov" && suffix != "wmv") {
+                errorMsg += QString("Unsupported file format: %1\n").arg(file);
+                hasError = true;
+                continue;
+            }
+
+            QUrl url = QUrl::fromLocalFile(file);
+            // 检查是否重复
+            bool isDuplicate = false;
+            for (const auto &v : videos) {
+                if (v.url.toString() == url.toString()) {
+                    errorMsg += QString("Same Video File: %1\n").arg(file);
+                    hasError = true;
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            if (isDuplicate) continue;
+
+            QString thumb = file.left(file.length() - 4) + ".png";
+            QIcon ico;
+
+            if (QFile::exists(thumb)) {
+                QImageReader imageReader(thumb);
+                QImage sprite = imageReader.read();
+                if (!sprite.isNull()) {
+                    ico = QIcon(QPixmap::fromImage(sprite));
+                } else {
+                    qDebug() << "Unable to process thumbnail：" << thumb;
+                    ico = QIcon(":/icons/defaultPicture.png");
+                }
+            }
+
+            // 如果没有缩略图，使用默认图标
+            if (ico.isNull()) {
+                ico = QIcon(":/icons/defaultPicture.png");
+            }
+
+            videos.emplace_back(TheButtonInfo(url, ico));
+        }
+
+        if (hasError) {
+            QMessageBox errorBox;
+            errorBox.setIcon(QMessageBox::Warning);
+            errorBox.setWindowTitle("Error Loading Video");
+            errorBox.setText(errorMsg);
+
+            errorBox.setStyleSheet(
+                "QMessageBox { background-color: white; color: black; }"
+                "QPushButton { background-color: #d0d0d0; }"
+                );
+            errorBox.exec();
+        }
+
+    }
+    else if (msgBox.clickedButton() == folderButton) {
+        // 选择加载文件夹
+        QString folder = QFileDialog::getExistingDirectory(this, tr("Select Video Folder"), "");
+
+        if (folder.isEmpty()) {
+            return;
+        }
+
+        std::vector<TheButtonInfo> folderVideos = getInfoIn(folder.toStdString());
+        QString folderErrorMsg;
+        bool folderHasError = false;
+
+        if (folderVideos.empty()) {
+            folderErrorMsg = QString("No video files found in folder: %1").arg(folder);
+            folderHasError = true;
+        }
+        else {
+            // 检查重复并添加
+            for (auto& videoInfo : folderVideos) {
+                bool isDuplicate = false;
+                for (const auto &v : videos) {
+                    if (v.url.toString() == videoInfo.url.toString()) {
+                        folderErrorMsg += QString("Same Video File: %1\n").arg(videoInfo.url.toLocalFile());
+                        folderHasError = true;
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                if (!isDuplicate) {
+                    videos.push_back(videoInfo);
+                }
+            }
+        }
+
+        if (folderHasError) {
+            QMessageBox errorBox;
+            errorBox.setIcon(QMessageBox::Warning);
+            errorBox.setWindowTitle("Error Loading Video");
+            errorBox.setText(folderErrorMsg);
+            errorBox.setStyleSheet(
+                "QMessageBox { background-color: white; color: black; }"
+                "QPushButton { background-color: #d0d0d0; }"
+                );
+            errorBox.exec();
+        }
+
+    }
+    else {
+        return;
+    }
+
+    // 删除所有按钮的父控件
+    QWidget* oldContainer = ui->scrollArea->widget();
+    if (oldContainer) {
+        delete oldContainer;
+    }
+    buttons.clear();
+
+    createButtons();
+}
+
+//删除播放列表所有视频
+void MainWindow::onDeleteAllClicked()
+{
+    if (videos.empty()) return;
+
+    // 获取当前播放的视频 URL 字符串
+    QString currentUrlStr = player->currentMedia().request().url().toString();
+
+    // 创建确认对话框
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Confirm Deletion");
+    msgBox.setText("Are you sure you want to delete all videos from the playlist except the currently playing one?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    msgBox.setStyleSheet(
+        "QMessageBox { background-color: white; color: black; }"
+        "QPushButton { background-color: #d0d0d0; }"
+        );
+
+    // 显示对话框并获取用户选择
+    if (msgBox.exec() == QMessageBox::Yes) {
+        // 创建一个新的视频列表，仅包含当前播放的视频
+        std::vector<TheButtonInfo> newVideos;
+
+        for (const auto &v : videos) {
+            if (v.url.toString() == currentUrlStr) {
+                newVideos.push_back(v);
+            }
+            // 不需要删除，因为不再使用指针
+        }
+
+        // 更新视频列表
+        videos = std::move(newVideos);
+
+        // 删除所有按钮的父控件
+        QWidget* oldContainer = ui->scrollArea->widget();
+        if (oldContainer) {
+            delete oldContainer;
+        }
+        buttons.clear();
+
+        // 刷新播放列表 UI
+        createButtons();
+    }
+}
+
+void MainWindow::onDeleteVideo(TheButton* button)
+{
+    if (!button) return;
+
+    // 找到按钮对应的视频信息
+    auto it = std::find(buttons.begin(), buttons.end(), button);
+    if (it == buttons.end()) {
+        qDebug() << "Could not find corresponding video info for the button.";
+        return;
+    }
+
+    int index = std::distance(buttons.begin(), it);
+    // 添加索引合法性检查
+    if (index < 0 || index >= static_cast<int>(videos.size())) {
+        qDebug() << "Invalid index for video deletion";
+        return;
+    }
+
+    // 获取被选中的视频 URL 字符串
+    QString selectedUrlStr = videos[index].url.toString();
+
+    // 创建确认对话框
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Confirm Deletion");
+    msgBox.setText(QString("Are you sure you want to delete \"%1\" from the playlist?").arg(videos[index].filename));
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    msgBox.setStyleSheet(
+        "QMessageBox { background-color: white; color: black; }"
+        "QPushButton { background-color: #F0F0F0; }"
+        );
+
+
+
+    // 显示对话框并获取用户选择
+    if (msgBox.exec() == QMessageBox::Yes) {
+
+
+        // 创建一个新的视频列表，不包含被删除的视频
+        std::vector<TheButtonInfo> newVideos;
+        for (int i = 0; i < static_cast<int>(videos.size()); ++i) {
+            if (i != index) {
+                newVideos.push_back(videos[i]);
+            }
+        }
+
+        // 更新视频列表
+        videos = std::move(newVideos);
+
+        // 删除所有按钮的父控件
+        QWidget* oldContainer = ui->scrollArea->widget();
+        if (oldContainer) {
+            QVBoxLayout*  curLayout = (QVBoxLayout* )(oldContainer->layout());
+           //  curLayout->removeWidget(buttons.at(index));
+           // //  delete oldContainer;
+           //  curLayout->wi
+            int nCount = curLayout->count();
+            for (int i = 0; i < nCount; i++)
+            {
+                if( curLayout->itemAt(i)->widget())
+                {
+                    auto obj = curLayout->itemAt(i)->widget();
+                    if(obj->property("buttonIndex").toInt() == index)
+                    {
+                        ((QWidget*)(obj))->setVisible(false);
+                        curLayout->removeWidget((QWidget*)obj);
+                        break;
+                    }
+                }
+
+            }
+        }
+       // buttons.clear();
+
+        buttons.erase(buttons.begin()+index);
+        // 刷新播放列表 UI rongyu
+        // createButtons();
+    }
 }

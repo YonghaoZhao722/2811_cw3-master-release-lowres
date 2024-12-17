@@ -7,10 +7,6 @@
 //              video for sports enthusiasts...
 //
 //
-
-
-#include "the_player.h"
-#include "the_button.h"
 #include "mainwindow.h"
 #include <QFont>
 

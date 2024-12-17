@@ -69,7 +69,7 @@ void ThePlayer::jumpTo(TheButtonInfo* button) {
     qDebug() << "Jumping to video index:" << currentVideoIndex;
 
     // 设置新视频
-    setMedia(*button->url);
+    setMedia(button->url);
     play();
 
     isChangingVideo = false;
@@ -139,7 +139,7 @@ void ThePlayer::nextVideo() {
 
     // 设置新视频
     TheButtonInfo* nextVideo = &infos->at(nextIndex);
-    setMedia(*nextVideo->url);
+    setMedia(nextVideo->url);
     currentVideoIndex = nextIndex;
 
     play();
@@ -163,7 +163,7 @@ void ThePlayer::previousVideo() {
 
     // 设置新视频
     TheButtonInfo* prevVideo = &infos->at(prevIndex);
-    setMedia(*prevVideo->url);
+    setMedia(prevVideo->url);
     currentVideoIndex = prevIndex;
 
     play();
@@ -179,7 +179,7 @@ void ThePlayer::changePlaybackSpeed() {
 int ThePlayer::getCurrentVideoIndex(TheButtonInfo* info) {
     if (!infos) return 0;
     for (size_t i = 0; i < infos->size(); i++) {
-        if (infos->at(i).url->toString() == info->url->toString()) {
+        if (infos->at(i).url.toString() == info->url.toString()) {
             return i;
         }
     }

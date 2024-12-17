@@ -12,41 +12,43 @@
 #include <QFileInfo>
 #include <QTimer>
 #include <QEventLoop>
-
+#include <QIcon>
+#include <memory>
 // TheButtonInfo 类扩展，添加duration属性
 class TheButtonInfo {
 public:
-    QUrl* url;
-    QIcon* icon;
+    QUrl url;
+    QIcon icon;
     qint64 duration;
     QString filename;
 
-    TheButtonInfo(QUrl* url, QIcon* icon, const QString& name = "") :
-        url(url),
-        icon(icon),
+    TheButtonInfo(const QUrl& u, const QIcon& i, const QString& name = "") :
+        url(u),
+        icon(i),
         duration(0),
         filename(name)
     {
-        if (filename.isEmpty() && url) {
-            filename = QFileInfo(url->toLocalFile()).fileName();
+        if (filename.isEmpty()) {
+            filename = QFileInfo(url.toLocalFile()).fileName();
         }
         updateDuration();  // 在构造函数中调用
     }
 
     // 新增：获取视频时长的方法
     qint64 updateDuration() {
-        if (!url) return 0;
+        if (url.isEmpty()) return 0;
 
         QMediaPlayer tempPlayer;
-        tempPlayer.setMedia(QMediaContent(*url));
+        tempPlayer.setMedia(QMediaContent(url));
 
         QEventLoop loop;
         QObject::connect(&tempPlayer, &QMediaPlayer::durationChanged,
-                         [&](qint64 newDuration) {
-                             duration = newDuration;
-                             loop.quit();
+                         [&loop, this](qint64 newDuration) {
+                             duration = newDuration;  // 更新 duration
+                             loop.quit();  // 结束事件循环
                          });
 
+        // 使用 QTimer 确保 event loop 有时间退出，避免死锁
         QTimer::singleShot(2000, &loop, &QEventLoop::quit);
         loop.exec();
 
@@ -79,10 +81,10 @@ public:
     }
 
     void init(TheButtonInfo* i);
-    void setDuration(qint64 duration); // 新增：设置时长的方法
-
+    void setDuration(qint64 duration); // 新增：设置时长的方法    
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
     QLabel* durationLabel;      // 显示时长的标签
@@ -95,6 +97,7 @@ private slots:
 
 signals:
     void jumpTo(TheButtonInfo*);
+    void deleteRequested(TheButton*);
 };
 
 #endif //CW2_THE_BUTTON_H

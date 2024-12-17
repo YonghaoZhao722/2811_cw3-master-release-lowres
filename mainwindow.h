@@ -9,6 +9,7 @@
 #include "the_player.h"
 #include "the_button.h"
 #include <vector>
+#include <QMediaPlaylist>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -28,9 +29,15 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
     void resizeEvent(QResizeEvent* event) override;
 
+private slots:
+    void onLoadButtonClicked();
+    void onDeleteAllClicked();
+    void onDeleteVideo(TheButton* button);
+
 private:
     Ui::MainWindow *ui;
     ThePlayer *player;
+    QMediaPlaylist* playlist;
     std::vector<TheButton*> buttons;
     std::vector<TheButtonInfo> videos;
 

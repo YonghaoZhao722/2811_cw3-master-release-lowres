@@ -7,12 +7,15 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QString>
+#include <QMenu>
+#include <QAction>
+#include <QContextMenuEvent>
 
 void TheButton::init(TheButtonInfo* i) {
     info = i;
 
-    if (i->icon) {
-        setIcon(*i->icon);
+    if (!i->icon.isNull()) {
+        setIcon(i->icon); ;
         setIconSize(size());
         // 强制将图标显示在最上层
         setStyleSheet(R"(
@@ -78,3 +81,33 @@ void TheButton::updateDurationPosition() {
                             height() - durationLabel->height() - 5);
     }
 }
+
+void TheButton::contextMenuEvent(QContextMenuEvent* event)
+{
+    QMenu contextMenu(this);
+
+    // 使用 addAction 创建 QAction，并让 QMenu 管理其生命周期
+    QAction* deleteAction = contextMenu.addAction("Delete");
+    contextMenu.setStyleSheet(
+        "QMenu {"
+        "    background-color: white;"
+        "    color: black;"
+        "}"
+        "QMenu::item {"
+        "    background-color: transparent;"
+        "    color: black;"
+        "}"
+        "QMenu::item:selected {"
+        "    background-color: #ff4d4d;"
+        "    color: white;"
+        "}"
+        );
+    // 连接信号到槽
+    connect(deleteAction, &QAction::triggered, this, [this]() {
+        emit deleteRequested(this);
+    });
+
+    // 显示上下文菜单
+    contextMenu.exec(event->globalPos());
+}
+
