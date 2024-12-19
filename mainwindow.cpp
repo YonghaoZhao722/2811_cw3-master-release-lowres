@@ -81,7 +81,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setStyleSheet("QMainWindow { background-color: #ffffff; }");
     setupUi();
-    loadVideos("C:\\Users\\32654\\Desktop\\videos");
+    // 获取命令行参数
+    QStringList args = QCoreApplication::arguments();
+    QString videoPath = "";
+    if (args.size() > 1) {
+        videoPath = args.at(1);
+    }
+
+    // 调用 loadVideos
+    loadVideos(videoPath);
     setupPlayer();
     createButtons();
     setupProgressBar();
@@ -181,21 +189,40 @@ void MainWindow::setupUi()
     setStyleSheet("background-color: black;");
 }
 
-void MainWindow::loadVideos(const std::string& path)
+void MainWindow::loadVideos(const QString& path)
 {
-    qDebug() << "Loading videos from path:" << QString::fromStdString(path);
-    if (!path.empty()) {
-        videos = getInfoIn(path);
+    qDebug() << "Loading videos from path:" << path;
+
+    if (!path.isEmpty()) {
+        std::string stdPath = path.toLocal8Bit().toStdString();
+        videos = getInfoIn(stdPath);
         qDebug() << "Number of videos found:" << videos.size();
     }
 
     if (videos.empty()) {
-        QMessageBox::information(
+        QMessageBox::information(this, "Tomeo", "No videos found in the given path.\nPlease select a folder.");
+
+        QString selectedDir = QFileDialog::getExistingDirectory(
             this,
-            "Tomeo",
-            "No videos found! Add command line argument to \"quoted\" file location.");
-        exit(-1);
+            "Select Video Folder",
+            QDir::homePath(),
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+            );
+
+        if (selectedDir.isEmpty()) {
+            QMessageBox::information(this, "Tomeo", "No folder selected. Exiting...");
+            exit(-1);
+        }
+
+        std::string stdSelectedDir = selectedDir.toLocal8Bit().toStdString(); // 或 selectedDir.toUtf8().toStdString()
+        videos = getInfoIn(stdSelectedDir);
+        if (videos.empty()) {
+            QMessageBox::information(this, "Tomeo", "No videos found in the selected folder. Exiting...");
+            exit(-1);
+        }
     }
+
+    qDebug() << "Videos successfully loaded.";
 }
 
 void MainWindow::setupPlayer()
@@ -797,7 +824,7 @@ void MainWindow::onDeleteVideo(TheButton* button)
 void MainWindow::detailVideo(TheButton* button){
 
     if (!button || !button->info) {
-        qDebug() << "按钮或按钮信息为空!";
+        qDebug() <<"no information!";
         return;
     }
 

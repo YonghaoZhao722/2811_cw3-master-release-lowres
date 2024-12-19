@@ -19,14 +19,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QFont appFont("Times New Roman", 12);  // 字体名称和字号
     QApplication::setFont(appFont);
-
+    QString videoPath;
     MainWindow window;
-    // if (argc == 2) {
-    //     window.loadVideos(std::string(argv[1]));
-    // } else {
-    //     window.loadVideos("");  // 或者直接调用 window.loadVideos();
-    // }
-
     window.show();
 
     return app.exec();
