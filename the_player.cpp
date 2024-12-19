@@ -7,7 +7,7 @@
 #include "progress_bar_widget.h"
 
 ThePlayer::ThePlayer()
-    : QMediaPlayer(nullptr), progressBar(nullptr), currentVideoIndex(0), isChangingVideo(false)
+    : QMediaPlayer(nullptr), progressBar(nullptr), currentVideoIndex(0), isChangingVideo(false), videoWidget(new QVideoWidget())
 {
     setVolume(10); // 设置初始音量
     QVideoWidget* videoWidget = new QVideoWidget(); // 创建视频显示部件
@@ -222,3 +222,4 @@ void ThePlayer::toggleMute() {
         volumeButton->setIcon(QIcon(":/icons/volume.svg"));
     }
 }
+

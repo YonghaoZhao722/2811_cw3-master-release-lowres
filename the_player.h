@@ -25,8 +25,8 @@ private:
     int getCurrentVideoIndex(TheButtonInfo* info);
     QSlider* volumeSlider;      // 音量滑块
     QPushButton* volumeButton;  // 音量按钮
-    bool isMuted;               // 静音状态
-
+    bool isMuted;        // 静音状态
+    QPushButton* fullScreenButton;
 public:
     ThePlayer();  // 构造函数声明
     void setProgressBar(ProgressBarWidget* slider); // 设置进度条方法

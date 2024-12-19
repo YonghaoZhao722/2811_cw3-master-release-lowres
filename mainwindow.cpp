@@ -22,6 +22,7 @@
 #include <QtCore/QDirIterator>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QtWidgets>
 
 // read in videos and thumbnails to this directory
 std::vector<TheButtonInfo> getInfoIn (std::string loc) {
@@ -64,6 +65,15 @@ std::vector<TheButtonInfo> getInfoIn (std::string loc) {
     return out;
 }
 
+void MainWindow::maximizeWindow() {
+    if (isFullScreen()) {
+        showNormal();
+
+    } else {
+        showFullScreen();
+
+    }
+}
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -92,6 +102,26 @@ MainWindow::MainWindow(QWidget *parent)
         "}"
         );
 
+    // 创建“全屏”按钮
+    QPushButton* fullScreenButton = new QPushButton("Fullscreen", this);
+    fullScreenButton->setObjectName("fullScreenButton");
+    fullScreenButton->setStyleSheet(
+        "QPushButton {"
+        "    background-color: #a6bfbd;"
+        "    color: white;"
+        "    border: none;"
+        "    padding: 10px 20px;"
+        "    font-size: 16px;"
+        "    border-radius: 8px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #0b433e;"
+        "}"
+        );
+
+    // 连接“全屏”按钮的点击信号到 maximizeWindow 槽
+    connect(fullScreenButton, &QPushButton::clicked, this, &MainWindow::maximizeWindow);
+
     // 创建“Delete All”按钮
     QPushButton* deleteAllButton = new QPushButton("Delete All", this);
     deleteAllButton->setObjectName("deleteAllButton");
@@ -114,6 +144,7 @@ MainWindow::MainWindow(QWidget *parent)
     QHBoxLayout* topLayout = new QHBoxLayout();
     topLayout->addWidget(loadButton);
     topLayout->addWidget(deleteAllButton);
+    topLayout->addWidget(fullScreenButton);
     topLayout->addStretch(); // 将按钮推到左侧
 
     // 将顶部布局添加到主布局
@@ -694,70 +725,67 @@ void MainWindow::onDeleteVideo(TheButton* button)
     }
 
     int index = std::distance(buttons.begin(), it);
-    // 添加索引合法性检查
     if (index < 0 || index >= static_cast<int>(videos.size())) {
         qDebug() << "Invalid index for video deletion";
         return;
     }
 
-    // 获取被选中的视频 URL 字符串
-    QString selectedUrlStr = videos[index].url.toString();
+    // 检查是否是唯一的视频
+    if (videos.size() == 1) {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Cannot Delete Video");
+        msgBox.setText("This is the only video remaining in the playlist.");
+        msgBox.setInformativeText("At least one video must be kept.");
+        msgBox.exec();
+        return;
+    }
 
-    // 创建确认对话框
+    // 确认删除
     QMessageBox msgBox;
     msgBox.setWindowTitle("Confirm Deletion");
-    msgBox.setText(QString("Are you sure you want to delete \"%1\" from the playlist?").arg(videos[index].filename));
+    msgBox.setText(QString("Are you sure you want to delete \"%1\" from the playlist?")
+                       .arg(videos[index].filename));
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     msgBox.setDefaultButton(QMessageBox::No);
-    msgBox.setStyleSheet(
-        "QMessageBox { background-color: white; color: black; }"
-        "QPushButton { background-color: #F0F0F0; }"
-        );
 
+    if (msgBox.exec() != QMessageBox::Yes) {
+        return;
+    }
 
-
-    // 显示对话框并获取用户选择
-    if (msgBox.exec() == QMessageBox::Yes) {
-
-
-        // 创建一个新的视频列表，不包含被删除的视频
-        std::vector<TheButtonInfo> newVideos;
-        for (int i = 0; i < static_cast<int>(videos.size()); ++i) {
-            if (i != index) {
-                newVideos.push_back(videos[i]);
+    // 在UI中删除按钮
+    QWidget* container = ui->scrollArea->widget();
+    if (container) {
+        QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(container->layout());
+        if (layout) {
+            // 找到并删除对应的按钮widget
+            for (int i = 0; i < layout->count(); ++i) {
+                QWidget* widget = layout->itemAt(i)->widget();
+                if (widget && widget->property("buttonIndex").toInt() == index) {
+                    layout->removeWidget(widget);
+                    widget->deleteLater();  // 安全删除widget
+                    break;
+                }
             }
-        }
 
-        // 更新视频列表
-        videos = std::move(newVideos);
-
-        // 删除所有按钮的父控件
-        QWidget* oldContainer = ui->scrollArea->widget();
-        if (oldContainer) {
-            QVBoxLayout*  curLayout = (QVBoxLayout* )(oldContainer->layout());
-           //  curLayout->removeWidget(buttons.at(index));
-           // //  delete oldContainer;
-           //  curLayout->wi
-            int nCount = curLayout->count();
-            for (int i = 0; i < nCount; i++)
-            {
-                if( curLayout->itemAt(i)->widget())
-                {
-                    auto obj = curLayout->itemAt(i)->widget();
-                    if(obj->property("buttonIndex").toInt() == index)
-                    {
-                        ((QWidget*)(obj))->setVisible(false);
-                        curLayout->removeWidget((QWidget*)obj);
-                        break;
+            // 更新剩余按钮的索引
+            for (int i = 0; i < layout->count(); ++i) {
+                QWidget* widget = layout->itemAt(i)->widget();
+                if (widget) {
+                    int btnIndex = widget->property("buttonIndex").toInt();
+                    if (btnIndex > index) {
+                        widget->setProperty("buttonIndex", btnIndex - 1);
                     }
                 }
-
             }
         }
-       // buttons.clear();
+    }
 
-        buttons.erase(buttons.begin()+index);
-        // 刷新播放列表 UI rongyu
-        // createButtons();
+    // 更新数据
+    videos.erase(videos.begin() + index);
+    buttons.erase(buttons.begin() + index);
+
+    // 强制布局更新
+    if (container) {
+        container->layout()->activate();
     }
 }

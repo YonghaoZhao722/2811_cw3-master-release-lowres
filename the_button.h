@@ -62,7 +62,6 @@ class TheButton : public QPushButton {
 
 public:
     TheButtonInfo* info;
-
     TheButton(QWidget *parent) : QPushButton(parent) {
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         setMinimumSize(200, 112);  // 16:9 比例的最小尺寸

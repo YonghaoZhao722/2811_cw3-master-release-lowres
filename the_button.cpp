@@ -111,3 +111,4 @@ void TheButton::contextMenuEvent(QContextMenuEvent* event)
     contextMenu.exec(event->globalPos());
 }
 
+

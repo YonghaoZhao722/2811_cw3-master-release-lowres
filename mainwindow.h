@@ -33,6 +33,7 @@ private slots:
     void onLoadButtonClicked();
     void onDeleteAllClicked();
     void onDeleteVideo(TheButton* button);
+    void maximizeWindow();
 
 private:
     Ui::MainWindow *ui;
