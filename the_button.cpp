@@ -88,6 +88,7 @@ void TheButton::contextMenuEvent(QContextMenuEvent* event)
 
     // 使用 addAction 创建 QAction，并让 QMenu 管理其生命周期
     QAction* deleteAction = contextMenu.addAction("Delete");
+    QAction* showDetailsAction = contextMenu.addAction("Details");
     contextMenu.setStyleSheet(
         "QMenu {"
         "    background-color: white;"
@@ -105,6 +106,9 @@ void TheButton::contextMenuEvent(QContextMenuEvent* event)
     // 连接信号到槽
     connect(deleteAction, &QAction::triggered, this, [this]() {
         emit deleteRequested(this);
+    });
+    connect(showDetailsAction, &QAction::triggered, this, [this]() {
+        emit showDetailsRequested(this);
     });
 
     // 显示上下文菜单

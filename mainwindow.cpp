@@ -108,7 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
     fullScreenButton->setStyleSheet(
         "QPushButton {"
         "    background-color: #a6bfbd;"
-        "    color: white;"
+        "    color: black;"
         "    border: none;"
         "    padding: 10px 20px;"
         "    font-size: 16px;"
@@ -256,7 +256,7 @@ void MainWindow::createButtons() {
 
         // 缩略图按钮
         TheButton* button = new TheButton(buttonWidget);
-        button->setIconSize(QSize(160, 90));  // 设置基础大小
+        button->setIconSize(QSize(160, 50));  // 设置基础大小
         button->setObjectName("thumbnailButton");
 
         // 连接删除请求信号
@@ -266,6 +266,7 @@ void MainWindow::createButtons() {
         button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         connect(button, &TheButton::jumpTo, player, &ThePlayer::jumpTo);
         connect(button, &TheButton::deleteRequested, this, &MainWindow::onDeleteVideo); //删除视频
+         connect(button, &TheButton::showDetailsRequested, this, &MainWindow::detailVideo);
         button->init(&videos.at(i));
         buttons.push_back(button);
 
@@ -273,16 +274,17 @@ void MainWindow::createButtons() {
         QWidget* infoWidget = new QWidget();
         infoWidget->setObjectName("infoWidget");
         QVBoxLayout* infoLayout = new QVBoxLayout(infoWidget);
-        infoLayout->setSpacing(10);
+        infoLayout->setSpacing(40);
 
         // 文件名标签
         QLabel* nameLabel = new QLabel(videos[i].filename);
         nameLabel->setObjectName("nameLabel");
         nameLabel->setWordWrap(true);  // 允许文字换行
-
+        nameLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        nameLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         // 设置自动调整字体大小
         QFont font = nameLabel->font();
-        font.setPointSize(25);  // 设置基础字体大小
+        font.setPointSize(10);  // 设置基础字体大小
         nameLabel->setFont(font);
 
         infoLayout->addWidget(nameLabel);
@@ -324,7 +326,7 @@ void MainWindow::createButtons() {
             color: #e0e0e0;
             padding: 0px;
             margin: 0px;
-            min-width: 50px;
+            min-width: 100px;
         }
 
 
@@ -342,8 +344,10 @@ void MainWindow::createButtons() {
             background: transparent;
             padding: 0px;
             margin: 0px;
-            min-width: 50px;
-            max-width: 30%;  /* 限制最大宽度 */
+            min-width: 60px;
+            min-height: 50px;
+            max-width: 100px;
+            max-height:100px;
         }
 
         QScrollArea {
@@ -788,4 +792,40 @@ void MainWindow::onDeleteVideo(TheButton* button)
     if (container) {
         container->layout()->activate();
     }
+}
+
+void MainWindow::detailVideo(TheButton* button){
+
+    if (!button || !button->info) {
+        qDebug() << "按钮或按钮信息为空!";
+        return;
+    }
+
+    // 获取视频信息
+    QString filename = button->info->filename;
+    QString filepath = button->info->url.toLocalFile();
+    qint64 durationMs = button->info->duration;
+    QString durationStr = QString::number(durationMs / 60000) + ":" + QString::number((durationMs % 60000) / 1000).rightJustified(2, '0');
+
+    // 创建详细信息对话框
+    QDialog detailDialog(this);
+    detailDialog.setWindowTitle("Details");
+    detailDialog.setStyleSheet("QDialog { background-color: white; }");
+    QVBoxLayout* layout = new QVBoxLayout(&detailDialog);
+
+    QLabel* nameLabel = new QLabel("Filename: " + filename, &detailDialog);
+    nameLabel->setStyleSheet("QLabel { color: black; background-color: transparent; }");
+
+    QLabel* pathLabel = new QLabel("Path: " + filepath, &detailDialog);
+    pathLabel->setStyleSheet("QLabel { color: black; background-color: transparent; }");
+
+    QLabel* durationLabel = new QLabel("Time: " + durationStr + " minutes", &detailDialog);
+    durationLabel->setStyleSheet("QLabel { color: black; background-color: transparent; }");
+
+    layout->addWidget(nameLabel);
+    layout->addWidget(pathLabel);
+    layout->addWidget(durationLabel);
+
+    detailDialog.setLayout(layout);
+    detailDialog.exec();
 }

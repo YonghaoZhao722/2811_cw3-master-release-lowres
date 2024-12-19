@@ -33,6 +33,7 @@ private slots:
     void onLoadButtonClicked();
     void onDeleteAllClicked();
     void onDeleteVideo(TheButton* button);
+    void detailVideo(TheButton* button);
     void maximizeWindow();
 
 private:

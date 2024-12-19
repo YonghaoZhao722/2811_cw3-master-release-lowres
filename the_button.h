@@ -97,6 +97,7 @@ private slots:
 signals:
     void jumpTo(TheButtonInfo*);
     void deleteRequested(TheButton*);
+    void showDetailsRequested(TheButton*);
 };
 
 #endif //CW2_THE_BUTTON_H
