@@ -22,7 +22,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void loadVideos(const std::string& path = "");
+    void loadVideos(const QString& path);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -50,7 +50,7 @@ private:
     void setupProgressBar();
     void setupPreviewLabel();
 
-    //视频播放控制
+
     QPushButton* prevButton;
     QPushButton* skipBackButton;
     QPushButton* playPauseButton;

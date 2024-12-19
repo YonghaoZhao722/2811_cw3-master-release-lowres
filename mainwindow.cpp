@@ -81,21 +81,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setStyleSheet("QMainWindow { background-color: #ffffff; }");
     setupUi();
-    // 获取命令行参数
+
     QStringList args = QCoreApplication::arguments();
     QString videoPath = "";
     if (args.size() > 1) {
         videoPath = args.at(1);
     }
 
-    // 调用 loadVideos
     loadVideos(videoPath);
     setupPlayer();
     createButtons();
     setupProgressBar();
     setupControlButtons();
 
-    // 连接“加载视频”按钮
+
     connect(ui->loadButton, &QPushButton::clicked, this, &MainWindow::onLoadButtonClicked);
     ui->loadButton->setStyleSheet(
         "QPushButton {"
@@ -110,8 +109,8 @@ MainWindow::MainWindow(QWidget *parent)
         "}"
         );
 
-    // 创建“全屏”按钮
-    QPushButton* fullScreenButton = new QPushButton("Fullscreen", this);
+
+    QPushButton* fullScreenButton = new QPushButton("Fullscreen / Exit", this);
     fullScreenButton->setObjectName("fullScreenButton");
     fullScreenButton->setStyleSheet(
         "QPushButton {"
@@ -127,43 +126,42 @@ MainWindow::MainWindow(QWidget *parent)
         "}"
         );
 
-    // 连接“全屏”按钮的点击信号到 maximizeWindow 槽
+
     connect(fullScreenButton, &QPushButton::clicked, this, &MainWindow::maximizeWindow);
 
-    // 创建“Delete All”按钮
+
     QPushButton* deleteAllButton = new QPushButton("Delete All", this);
     deleteAllButton->setObjectName("deleteAllButton");
     deleteAllButton->setStyleSheet(
         "QPushButton {"
-        "    background-color: #ff4d4d;"  // 红色背景
-        "    color: white;"               // 白色文字
+        "    background-color: #ff4d4d;"
+        "    color: white;"
         "    border: none;"
         "    padding: 10px 20px;"
         "    font-size: 16px;"
         "    border-radius: 8px;"
         "}"
         "QPushButton:hover {"
-        "    background-color: #ff1a1a;"  // 悬停时更深的红色
+        "    background-color: #ff1a1a;"
         "}"
         );
-    // 获取 Qt Designer 中的 loadButton
+
     QPushButton* loadButton = ui->loadButton;
-    // 将“LOAD”和“DELETE ALL”按钮添加到水平布局
+
     QHBoxLayout* topLayout = new QHBoxLayout();
     topLayout->addWidget(loadButton);
     topLayout->addWidget(deleteAllButton);
     topLayout->addWidget(fullScreenButton);
-    topLayout->addStretch(); // 将按钮推到左侧
+    topLayout->addStretch();
 
-    // 将顶部布局添加到主布局
+
     QWidget* topWidget = new QWidget(this);
     topWidget->setLayout(topLayout);
     ui->videoLayout->insertWidget(0, topWidget);
 
-    // 连接“Delete All”按钮信号到槽函数
     connect(deleteAllButton, &QPushButton::clicked, this, &MainWindow::onDeleteAllClicked);
 
-    // 开始播放第一个视频
+
     if (!videos.empty()) {
         qDebug() << "not empty ";
         player->setMedia(videos[0].url);
@@ -184,7 +182,6 @@ void MainWindow::setupUi()
     setWindowTitle("tomeo");
     setMinimumSize(800, 680);
 
-    // 设置视频窗口的样式
     ui->videoWidget->setStyleSheet("QVideoWidget { background-color: black; }");
     setStyleSheet("background-color: black;");
 }
@@ -214,7 +211,7 @@ void MainWindow::loadVideos(const QString& path)
             exit(-1);
         }
 
-        std::string stdSelectedDir = selectedDir.toLocal8Bit().toStdString(); // 或 selectedDir.toUtf8().toStdString()
+        std::string stdSelectedDir = selectedDir.toLocal8Bit().toStdString();
         videos = getInfoIn(stdSelectedDir);
         if (videos.empty()) {
             QMessageBox::information(this, "Tomeo", "No videos found in the selected folder. Exiting...");
@@ -231,7 +228,6 @@ void MainWindow::setupPlayer()
     player->setVideoOutput(ui->videoWidget);
     player->setContent(&buttons, &videos);
 
-    // 设置视频窗口的背景
     ui->videoWidget->setAttribute(Qt::WA_NoSystemBackground);
 }
 
@@ -239,7 +235,7 @@ void MainWindow::setupProgressBar()
 {
     ui->progressBar->setFixedHeight(30);
     ui->progressBar->setStyleSheet(
-        "QWidget { background: transparent; }"  // 设置整体背景透明
+        "QWidget { background: transparent; }" 
         "QSlider::groove:horizontal {"
         "    background: #ddd;"
         "    height: 8px;"
@@ -251,7 +247,7 @@ void MainWindow::setupProgressBar()
         "    margin: -4px 0;"
         "    border-radius: 8px;"
         "}"
-        "QLabel {"  // 时间标签样式
+        "QLabel {" 
         "    color: white;"
         "    font-size: 16px;"
         "    font-weight: bold;"
@@ -271,7 +267,6 @@ void MainWindow::createButtons() {
     layout->setSpacing(8);
 
     for (int i = 0; i < videos.size(); i++) {
-        // 创建一个整体的容器
         QWidget* buttonWidget = new QWidget();
         buttonWidget->setObjectName("videoItem");
         buttonWidget->setCursor(Qt::PointingHandCursor);
@@ -281,15 +276,11 @@ void MainWindow::createButtons() {
         buttonLayout->setContentsMargins(5, 5, 5, 5);
         buttonLayout->setSpacing(2);
 
-        // 缩略图按钮
         TheButton* button = new TheButton(buttonWidget);
-        button->setIconSize(QSize(160, 50));  // 设置基础大小
+        button->setIconSize(QSize(160, 50)); 
         button->setObjectName("thumbnailButton");
 
-        // 连接删除请求信号
         connect(button, &TheButton::jumpTo, player, &ThePlayer::jumpTo);
-       // connect(button, &TheButton::deleteRequested, this, &MainWindow::onDeleteVideo);
-        // 设置大小策略为可扩展但保持宽高比
         button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         connect(button, &TheButton::jumpTo, player, &ThePlayer::jumpTo);
         connect(button, &TheButton::deleteRequested, this, &MainWindow::onDeleteVideo); //删除视频
@@ -297,30 +288,26 @@ void MainWindow::createButtons() {
         button->init(&videos.at(i));
         buttons.push_back(button);
 
-        // 右侧信息容器
         QWidget* infoWidget = new QWidget();
         infoWidget->setObjectName("infoWidget");
         QVBoxLayout* infoLayout = new QVBoxLayout(infoWidget);
         infoLayout->setSpacing(40);
 
-        // 文件名标签
         QLabel* nameLabel = new QLabel(videos[i].filename);
         nameLabel->setObjectName("nameLabel");
         nameLabel->setWordWrap(true);  // 允许文字换行
         nameLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         nameLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        // 设置自动调整字体大小
         QFont font = nameLabel->font();
-        font.setPointSize(10);  // 设置基础字体大小
+        font.setPointSize(10);   
         nameLabel->setFont(font);
 
         infoLayout->addWidget(nameLabel);
 
         infoLayout->addStretch();
 
-        // 设置按钮和信息区域的比例
-        buttonLayout->addWidget(button, 1);  // 缩略图占比更大
-        buttonLayout->addWidget(infoWidget, 2);  // 信息区域占比较小
+        buttonLayout->addWidget(button, 1); 
+        buttonLayout->addWidget(infoWidget, 2);
 
         buttonWidget->setProperty("buttonIndex", i);
 
@@ -389,7 +376,6 @@ void MainWindow::createButtons() {
     ui->scrollArea->setWidget(container);
     ui->scrollArea->viewport()->installEventFilter(this);
 
-    // 设置容器的大小策略
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
@@ -401,11 +387,9 @@ void MainWindow::resizeEvent(QResizeEvent* event) {
 void MainWindow::updateFontSizes() {
     int viewportWidth = ui->scrollArea->viewport()->width();
 
-    // 计算动态字体大小
-    int nameFontSize = qMax(8, viewportWidth / 50);  // 最小8pt
+    int nameFontSize = qMax(8, viewportWidth / 50); 
 
 
-    // 更新所有标签的字体大小
     QList<QLabel*> nameLabels = ui->scrollArea->findChildren<QLabel*>("nameLabel");
     for (QLabel* label : nameLabels) {
         QFont font = label->font();
@@ -416,8 +400,8 @@ void MainWindow::updateFontSizes() {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
-    QApplication::quit();  // 退出整个程序
-    event->accept();       // 接受关闭事件
+    QApplication::quit();
+    event->accept();
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
@@ -429,7 +413,6 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
                 bool ok;
                 int index = widget->property("buttonIndex").toInt(&ok);
                 if (ok && index >= 0 && index < buttons.size()) {
-                    // 触发播放信号
                     buttons[index]->clicked();
                     return true;
                 }
@@ -440,7 +423,7 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
 }
 
 
-//=================视频播放控制按钮=================
+//=================play control=================
 void MainWindow::setupControlButtons() {
     QWidget* controlWidget = new QWidget();
     QVBoxLayout* vLayout = new QVBoxLayout(controlWidget);
@@ -471,9 +454,9 @@ void MainWindow::setupControlButtons() {
     QString buttonStyle = "QPushButton { "
                           "  background-color: #2b2b2b; "
                           "  border: none; "
-                          "  padding: 8px; "  // 减小padding
+                          "  padding: 8px; " 
                           "  border-radius: 6px; "
-                          "  margin: 0px; "   // 添加margin: 0
+                          "  margin: 0px; "
                           "} "
                           "QPushButton:hover { background-color: #3b3b3b; }";
 
@@ -481,7 +464,6 @@ void MainWindow::setupControlButtons() {
     player->getVolumeButton()->setFixedSize(50, 50);
     player->getVolumeButton()->setIconSize(QSize(30, 30));
 
-    // 为音量滑块添加样式
     QString sliderStyle = "QSlider::groove:horizontal {"
                           "  height: 3px;"
                           "  background: #4b4b4b;"
@@ -494,14 +476,14 @@ void MainWindow::setupControlButtons() {
                           "  border-radius: 6px;"
                           "}";
     player->getVolumeSlider()->setStyleSheet(sliderStyle);
-    player->getVolumeSlider()->setFixedWidth(120);  // 调整滑块宽度
+    player->getVolumeSlider()->setFixedWidth(120); 
 
     QList<QPushButton*> controlButtons = {prevButton, skipBackButton, playPauseButton,
                                            skipForwardButton, nextButton, speedButton};
 
     for (auto* button : controlButtons) {
         button->setStyleSheet(buttonStyle);
-        button->setFixedSize(50, 50); //按钮大小
+        button->setFixedSize(50, 50);
         button->setIconSize(QSize(30, 30));
     }
 
@@ -514,7 +496,7 @@ void MainWindow::setupControlButtons() {
 
     QHBoxLayout* volumeControlLayout = new QHBoxLayout();
     volumeControlLayout->setSpacing(6);
-    volumeControlLayout->setContentsMargins(0, 0, 0, 0);  // 移除边距
+    volumeControlLayout->setContentsMargins(0, 0, 0, 0);
     volumeControlLayout->addWidget(player->getVolumeButton());
     volumeControlLayout->addWidget(player->getVolumeSlider());
 
@@ -526,9 +508,9 @@ void MainWindow::setupControlButtons() {
 
     // Add layouts to main control layout
 
-    controlLayout->addLayout(leftButtonsLayout);  // 左侧按钮组
-    controlLayout->addLayout(volumeControlLayout); // 添加音量控制组
-    controlLayout->addWidget(speedButton);        // 速度按钮
+    controlLayout->addLayout(leftButtonsLayout);  
+    controlLayout->addLayout(volumeControlLayout); 
+    controlLayout->addWidget(speedButton);     
 
     controlLayout->addSpacing(10);
 
@@ -552,12 +534,10 @@ void MainWindow::setupControlButtons() {
     ui->videoLayout->insertWidget(2, controlWidget);
 }
 
-// 实现加载文件
 void MainWindow::onLoadButtonClicked()
 {
     qDebug() << "onLoadButtonClicked called";
 
-    // 创建一个提示框，让用户选择加载模式
     QMessageBox msgBox;
     msgBox.setWindowTitle("Load Video");
     msgBox.setText("Do you want to load video files or a folder?");
@@ -568,7 +548,6 @@ void MainWindow::onLoadButtonClicked()
     msgBox.exec();
 
     if (msgBox.clickedButton() == fileButton) {
-        // 选择加载文件
         QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Select Video Files"),
                                                               "",
                                                               tr("Video Files (*.mp4 *.MOV *.wmv)"));
@@ -589,7 +568,6 @@ void MainWindow::onLoadButtonClicked()
             }
 
             QUrl url = QUrl::fromLocalFile(file);
-            // 检查是否重复
             bool isDuplicate = false;
             for (const auto &v : videos) {
                 if (v.url.toString() == url.toString()) {
@@ -615,7 +593,6 @@ void MainWindow::onLoadButtonClicked()
                 }
             }
 
-            // 如果没有缩略图，使用默认图标
             if (ico.isNull()) {
                 ico = QIcon(":/icons/defaultPicture.png");
             }
@@ -638,7 +615,6 @@ void MainWindow::onLoadButtonClicked()
 
     }
     else if (msgBox.clickedButton() == folderButton) {
-        // 选择加载文件夹
         QString folder = QFileDialog::getExistingDirectory(this, tr("Select Video Folder"), "");
 
         if (folder.isEmpty()) {
@@ -654,7 +630,6 @@ void MainWindow::onLoadButtonClicked()
             folderHasError = true;
         }
         else {
-            // 检查重复并添加
             for (auto& videoInfo : folderVideos) {
                 bool isDuplicate = false;
                 for (const auto &v : videos) {
@@ -688,7 +663,6 @@ void MainWindow::onLoadButtonClicked()
         return;
     }
 
-    // 删除所有按钮的父控件
     QWidget* oldContainer = ui->scrollArea->widget();
     if (oldContainer) {
         delete oldContainer;
@@ -698,15 +672,12 @@ void MainWindow::onLoadButtonClicked()
     createButtons();
 }
 
-//删除播放列表所有视频
 void MainWindow::onDeleteAllClicked()
 {
     if (videos.empty()) return;
 
-    // 获取当前播放的视频 URL 字符串
     QString currentUrlStr = player->currentMedia().request().url().toString();
 
-    // 创建确认对话框
     QMessageBox msgBox;
     msgBox.setWindowTitle("Confirm Deletion");
     msgBox.setText("Are you sure you want to delete all videos from the playlist except the currently playing one?");
@@ -717,29 +688,23 @@ void MainWindow::onDeleteAllClicked()
         "QPushButton { background-color: #d0d0d0; }"
         );
 
-    // 显示对话框并获取用户选择
     if (msgBox.exec() == QMessageBox::Yes) {
-        // 创建一个新的视频列表，仅包含当前播放的视频
         std::vector<TheButtonInfo> newVideos;
 
         for (const auto &v : videos) {
             if (v.url.toString() == currentUrlStr) {
                 newVideos.push_back(v);
             }
-            // 不需要删除，因为不再使用指针
         }
 
-        // 更新视频列表
         videos = std::move(newVideos);
 
-        // 删除所有按钮的父控件
         QWidget* oldContainer = ui->scrollArea->widget();
         if (oldContainer) {
             delete oldContainer;
         }
         buttons.clear();
 
-        // 刷新播放列表 UI
         createButtons();
     }
 }
@@ -748,7 +713,6 @@ void MainWindow::onDeleteVideo(TheButton* button)
 {
     if (!button) return;
 
-    // 找到按钮对应的视频信息
     auto it = std::find(buttons.begin(), buttons.end(), button);
     if (it == buttons.end()) {
         qDebug() << "Could not find corresponding video info for the button.";
@@ -761,7 +725,6 @@ void MainWindow::onDeleteVideo(TheButton* button)
         return;
     }
 
-    // 检查是否是唯一的视频
     if (videos.size() == 1) {
         QMessageBox msgBox;
         msgBox.setWindowTitle("Cannot Delete Video");
@@ -771,7 +734,6 @@ void MainWindow::onDeleteVideo(TheButton* button)
         return;
     }
 
-    // 确认删除
     QMessageBox msgBox;
     msgBox.setWindowTitle("Confirm Deletion");
     msgBox.setText(QString("Are you sure you want to delete \"%1\" from the playlist?")
@@ -783,22 +745,19 @@ void MainWindow::onDeleteVideo(TheButton* button)
         return;
     }
 
-    // 在UI中删除按钮
     QWidget* container = ui->scrollArea->widget();
     if (container) {
         QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(container->layout());
         if (layout) {
-            // 找到并删除对应的按钮widget
             for (int i = 0; i < layout->count(); ++i) {
                 QWidget* widget = layout->itemAt(i)->widget();
                 if (widget && widget->property("buttonIndex").toInt() == index) {
                     layout->removeWidget(widget);
-                    widget->deleteLater();  // 安全删除widget
+                    widget->deleteLater(); 
                     break;
                 }
             }
 
-            // 更新剩余按钮的索引
             for (int i = 0; i < layout->count(); ++i) {
                 QWidget* widget = layout->itemAt(i)->widget();
                 if (widget) {
@@ -811,11 +770,9 @@ void MainWindow::onDeleteVideo(TheButton* button)
         }
     }
 
-    // 更新数据
     videos.erase(videos.begin() + index);
     buttons.erase(buttons.begin() + index);
 
-    // 强制布局更新
     if (container) {
         container->layout()->activate();
     }
@@ -828,13 +785,11 @@ void MainWindow::detailVideo(TheButton* button){
         return;
     }
 
-    // 获取视频信息
     QString filename = button->info->filename;
     QString filepath = button->info->url.toLocalFile();
     qint64 durationMs = button->info->duration;
     QString durationStr = QString::number(durationMs / 60000) + ":" + QString::number((durationMs % 60000) / 1000).rightJustified(2, '0');
 
-    // 创建详细信息对话框
     QDialog detailDialog(this);
     detailDialog.setWindowTitle("Details");
     detailDialog.setStyleSheet("QDialog { background-color: white; }");
@@ -846,7 +801,7 @@ void MainWindow::detailVideo(TheButton* button){
     QLabel* pathLabel = new QLabel("Path: " + filepath, &detailDialog);
     pathLabel->setStyleSheet("QLabel { color: black; background-color: transparent; }");
 
-    QLabel* durationLabel = new QLabel("Time: " + durationStr + " minutes", &detailDialog);
+    QLabel* durationLabel = new QLabel("Time: " + durationStr, &detailDialog);
     durationLabel->setStyleSheet("QLabel { color: black; background-color: transparent; }");
 
     layout->addWidget(nameLabel);

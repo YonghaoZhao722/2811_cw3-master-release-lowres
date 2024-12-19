@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     qDebug() << "Qt version: " << QT_VERSION_STR << endl;
 
     QApplication app(argc, argv);
-    QFont appFont("Times New Roman", 12);  // 字体名称和字号
+    QFont appFont("Arial", 12);
     QApplication::setFont(appFont);
     QString videoPath;
     MainWindow window;

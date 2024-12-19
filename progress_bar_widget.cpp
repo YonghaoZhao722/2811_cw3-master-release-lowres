@@ -8,38 +8,38 @@ ProgressBarWidget::ProgressBarWidget(QWidget* parent)
     , totalDuration(0)
     , isUserInteracting(false)
 {
-    // 创建滑块和时间标签
+    // Create the slider and time label
     slider = new QSlider(Qt::Horizontal, this);
     timeLabel = new QLabel("00:00 / 00:00", this);
 
-    // 设置时间标签属性
-    timeLabel->setFixedWidth(100);  // 固定时间标签宽度
+    // Set properties for the time label
+    timeLabel->setFixedWidth(100);  // Fix the width of the time label
     timeLabel->setAlignment(Qt::AlignCenter);
 
-    // 创建水平布局
+    // Create a horizontal layout
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->addWidget(slider, 1);  // 设置stretch factor为1，使进度条占据剩余空间
+    layout->addWidget(slider, 1);  // Set stretch factor to 1 so the slider occupies remaining space
     layout->addWidget(timeLabel);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(10);
     setLayout(layout);
 
-    // 当用户开始拖动滑块
+    // When the user starts dragging the slider
     connect(slider, &QSlider::sliderPressed, this, [this]() {
         isUserInteracting = true;
     });
 
-    // 当用户释放滑块
+    // When the user releases the slider
     connect(slider, &QSlider::sliderReleased, this, [this]() {
         isUserInteracting = false;
         emit positionChanged(slider->value());
     });
 
-    // 用户点击滑块的新位置
+    // When the user clicks on a new position of the slider
     connect(slider, &QSlider::sliderMoved, this, [this](int value) {
         if (isUserInteracting) {
             emit positionChanged(value);
-            // 更新时间显示
+            // Update the time display
             timeLabel->setText(QString("%1 / %2")
                                    .arg(formatTime(value))
                                    .arg(formatTime(totalDuration)));
@@ -50,8 +50,8 @@ ProgressBarWidget::ProgressBarWidget(QWidget* parent)
 void ProgressBarWidget::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
-    // 当窗口大小改变时，进度条会自动调整大小
-    // 因为我们使用了layout的stretch factor，所以不需要在这里手动计算宽度
+    // Automatically adjust the slider size when the window is resized
+    // Since we use layout's stretch factor, there's no need to manually calculate the width here
 }
 
 QString ProgressBarWidget::formatTime(qint64 milliseconds)

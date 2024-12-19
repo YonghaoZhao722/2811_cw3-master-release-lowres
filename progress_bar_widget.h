@@ -23,6 +23,6 @@ private:
     bool isUserInteracting;
 
     QString formatTime(qint64 milliseconds);
-    virtual void resizeEvent(QResizeEvent* event) override;  // 添加重置大小事件处理
+    virtual void resizeEvent(QResizeEvent* event) override;
 };
 #endif // PROGRESS_BAR_WIDGET_H

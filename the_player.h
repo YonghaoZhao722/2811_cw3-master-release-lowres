@@ -23,28 +23,28 @@ private:
     int currentVideoIndex;
     bool isChangingVideo;
     int getCurrentVideoIndex(TheButtonInfo* info);
-    QSlider* volumeSlider;      // 音量滑块
-    QPushButton* volumeButton;  // 音量按钮
-    bool isMuted;        // 静音状态
+    QSlider* volumeSlider;
+    QPushButton* volumeButton;
+    bool isMuted;
     QPushButton* fullScreenButton;
 public:
-    ThePlayer();  // 构造函数声明
-    void setProgressBar(ProgressBarWidget* slider); // 设置进度条方法
+    ThePlayer();
+    void setProgressBar(ProgressBarWidget* slider);
 
     // all buttons have been setup, store pointers here
     void setContent(std::vector<TheButton*>* b, std::vector<TheButtonInfo>* i);
-    void setupVolumeControl();     // 设置音量控制
+    void setupVolumeControl();
     QSlider* getVolumeSlider() { return volumeSlider; }
     QPushButton* getVolumeButton() { return volumeButton; }
 
 private slots:
     void playStateChanged(QMediaPlayer::State ms);
-    void updateProgressBar(qint64 position); // 更新进度条位置
+    void updateProgressBar(qint64 position);
 
-    void seekToPosition(qint64 value);  // 改为 qint64
+    void seekToPosition(qint64 value);
 
 signals:
-    void positionChanged(qint64 position); // 重写信号（可选）
+    void positionChanged(qint64 position);
     void playbackRateChanged(double rate);
 
 public slots:
@@ -56,8 +56,8 @@ public slots:
     void nextVideo();
     void previousVideo();
     void changePlaybackSpeed();
-    void updateVolume(int value);  // 更新音量
-    void toggleMute();            // 切换静音
+    void updateVolume(int value);
+    void toggleMute();
 };
 
 #endif //CW2_THE_PLAYER_H
